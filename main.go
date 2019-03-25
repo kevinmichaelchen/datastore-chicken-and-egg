@@ -30,9 +30,9 @@ func main() {
 		log.Fatalf("Error creating client. %s", err.Error())
 	}
 
+	// Let's make a root folder!!!
 	rootFolderID := "1"
-	rootFolderKey := datastore.NameKey(
-		FolderEntity, rootFolderID, nil)
+	rootFolderKey := datastore.NameKey(FolderEntity, rootFolderID, nil)
 	rootFolder := &Folder{
 		ID:       rootFolderID,
 		ParentID: "",
@@ -42,9 +42,10 @@ func main() {
 		log.Fatalf("Error putting root folder. %s", err.Error())
 	}
 
+	// Let's make a subfolder under
+	// the root folder we just created!!!
 	subFolderID := "2"
-	subFolderKey := datastore.NameKey(
-		FolderEntity, subFolderID, rootFolderKey)
+	subFolderKey := datastore.NameKey(FolderEntity, subFolderID, rootFolderKey)
 	subFolder := &Folder{
 		ID:       subFolderID,
 		ParentID: rootFolderID,
@@ -54,6 +55,8 @@ func main() {
 		log.Fatalf("Error putting subfolder. %s", err.Error())
 	}
 
+	// OKAY!
+	// Let's do a DB lookup
 	//badKey := datastore.NameKey(FolderEntity, subFolderID, nil)
 	goodKey := datastore.NameKey(FolderEntity, subFolderID, rootFolderKey)
 	var f Folder
