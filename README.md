@@ -35,3 +35,11 @@ and the folder's parent ID...
 
 But how do we know the folder's parent ID
 before looking up the folder itself?
+
+## Conclusion
+Instead of making the parent key the node's parent,
+maybe we can use the root folder ID as the parent key
+for every node in that true.
+
+That way, we still get to use a common ancestor
+for transactional queries and get the advantages of small entity groups.
