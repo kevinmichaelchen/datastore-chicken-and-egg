@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// Grant Team 6 permissions on Node 1
-	n2 := "45"
+	n2 := "1"
 	k2 := datastore.NameKey(PermissionsEntity, n2, datastore.NameKey("Team", "6", nil))
 	_, err = client.Put(
 		ctx,
@@ -54,9 +54,6 @@ func main() {
 		log.Fatalf("Error creating permissions: %s", err.Error())
 	}
 
-	// OKAY!
-	// Let's do a DB lookup
-	//badKey := datastore.NameKey(FolderEntity, subFolderID, nil)
 	var p1, p2 Permissions
 	if err := client.Get(ctx, k1, &p1); err != nil {
 		log.Fatalf("Error reading: %s", err.Error())
@@ -67,4 +64,18 @@ func main() {
 
 	log.Println("p1 =", p1.String())
 	log.Println("p2 =", p2.String())
+
+	// Let's do a global query for all entities w/ NodeID = 1
+	q := datastore.NewQuery(PermissionsEntity).
+		KeysOnly().
+		Filter("NodeID =", "1")
+
+	keys, err := client.GetAll(ctx, q, nil)
+	if err != nil {
+		log.Fatalf("Error: %s", err.Error())
+	}
+
+	for i, key := range keys {
+		log.Printf("key #%d = %s\n", i, key.String())
+	}
 }
