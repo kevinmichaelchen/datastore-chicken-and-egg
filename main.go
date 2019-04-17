@@ -3,73 +3,71 @@ package main
 import (
 	"cloud.google.com/go/datastore"
 	"context"
-	"fmt"
 	"log"
 )
 
 const (
 	PermissionsEntity = "Permissions"
+	FolderEntity      = "Folder"
 )
 
-type Permissions struct {
-	NodeID string
+type Folder struct {
+	ParentID string
 }
 
-func (p Permissions) String() string {
-	return fmt.Sprintf("Permissions[NodeID=%s]", p.NodeID)
+func createFolder(ctx context.Context, client *datastore.Client, key *datastore.Key) {
+	log.Println("Creating key:", key.String())
+	f := &Folder{}
+	parentKey := key.Parent
+	if parentKey != nil {
+		f.ParentID = parentKey.Name
+	}
+	_, err := client.Put(ctx, key, f)
+	if err != nil {
+		log.Fatalf("Error creating folder: %s", err.Error())
+	}
 }
 
 func main() {
 	ctx := context.TODO()
 
 	// Read Datastore Project ID
+	log.Println("Reading configs")
 	config := LoadConfig()
 
 	// Create client
+	log.Println("Creating client")
 	client, err := datastore.NewClient(ctx, config.DatastoreProjectID)
 	if err != nil {
 		log.Fatalf("Error creating client. %s", err.Error())
 	}
 
+	// Create a root folder
+	sportsKey := datastore.NameKey(FolderEntity, "sports", nil)
+	createFolder(ctx, client, sportsKey)
 
-	// Grant User 5 permissions on Node 1
-	n1 := "1"
-	k1 := datastore.NameKey(PermissionsEntity, n1, datastore.NameKey("User", "5", nil))
-	_, err = client.Put(
-		ctx,
-		k1,
-		&Permissions{NodeID: n1})
-	if err != nil {
-		log.Fatalf("Error creating permissions: %s", err.Error())
-	}
+	contactSportsKey := datastore.NameKey(FolderEntity, "contact-sports", sportsKey)
+	createFolder(ctx, client, contactSportsKey)
 
-	// Grant Team 6 permissions on Node 1
-	n2 := "1"
-	k2 := datastore.NameKey(PermissionsEntity, n2, datastore.NameKey("Team", "6", nil))
-	_, err = client.Put(
-		ctx,
-		k2,
-		&Permissions{NodeID: n2})
-	if err != nil {
-		log.Fatalf("Error creating permissions: %s", err.Error())
-	}
+	winterSportsKey := datastore.NameKey(FolderEntity, "winter-sports", sportsKey)
+	createFolder(ctx, client, winterSportsKey)
 
-	var p1, p2 Permissions
-	if err := client.Get(ctx, k1, &p1); err != nil {
-		log.Fatalf("Error reading: %s", err.Error())
-	}
-	if err := client.Get(ctx, k2, &p2); err != nil {
-		log.Fatalf("Error reading: %s", err.Error())
-	}
+	iceHockeyKey := datastore.NameKey(FolderEntity, "ice-hockey", winterSportsKey)
+	createFolder(ctx, client, iceHockeyKey)
 
-	log.Println("p1 =", p1.String())
-	log.Println("p2 =", p2.String())
+	snowboardingKey := datastore.NameKey(FolderEntity, "snowboarding", winterSportsKey)
+	createFolder(ctx, client, snowboardingKey)
+
+	trickKey := datastore.NameKey(FolderEntity, "trick-snowboarding", snowboardingKey)
+	createFolder(ctx, client, trickKey)
 
 	// Let's do a global query for all entities w/ NodeID = 1
-	q := datastore.NewQuery(PermissionsEntity).
+	q := datastore.NewQuery(FolderEntity).
 		KeysOnly().
-		Filter("NodeID =", "1")
+		Ancestor(winterSportsKey).
+		Filter("ParentID =", winterSportsKey.Name)
 
+	log.Println("Doing query")
 	keys, err := client.GetAll(ctx, q, nil)
 	if err != nil {
 		log.Fatalf("Error: %s", err.Error())
